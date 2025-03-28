@@ -4,6 +4,7 @@ const cors = require('cors');
 const { createServer } = require('http');
 const authRoutes = require('./Router/authRoutes');
 const userRoutes = require('./Router/userRoutes')
+const groupRoutes = require('./Router/groupRoutes')
 require('./DB/connection');
 const { initializeSocket, getSocketInstance } = require("./Config/socket"); // Import socket functions
 const ChatApp = express();
@@ -13,6 +14,7 @@ ChatApp.use(cors());
 ChatApp.use(express.json());
 ChatApp.use("/auth", authRoutes);
 ChatApp.use("/user", userRoutes);
+ChatApp.use("/grp", groupRoutes);
 
 // Initialize Socket.io
 initializeSocket(server);
