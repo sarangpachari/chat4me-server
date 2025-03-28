@@ -5,13 +5,10 @@ const User = require("../Model/userSchema");
 exports.getChatUsers = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params); // Convert userId to ObjectId
-    console.log("Fetching chats for userId:", userId);
 
     const chats = await Chats.find({
       $or: [{ senderId: userId }, { receiverId: userId }],
     }).select("senderId receiverId -_id"); // Fetch only senderId & receiverId
-
-    console.log("Chats found:", chats);
 
     if (!chats.length) {
       return res.status(400).json({ message: "No chats found", users: [] });
@@ -31,14 +28,10 @@ exports.getChatUsers = async (req, res) => {
       }
     });
 
-    console.log("Unique Chat User IDs:", Array.from(chatUserIds));
-
     const users = await User.find(
       { _id: { $in: Array.from(chatUserIds) } },
       "username email"
     );
-
-    console.log("Fetched Chat Users:", users);
 
     return res.status(200).json({
       users: users, // Return user details instead of just IDs
@@ -68,29 +61,34 @@ exports.deleteSingleChat = async (req, res) => {
 
 exports.clearAllChats = async (req, res) => {
   try {
-      const { senderId, receiverId } = req.body;
+    const { senderId, receiverId } = req.body;
 
-      if (!senderId || !receiverId) {
-          return res.status(400).json({ message: "Sender ID and Receiver ID are required" });
-      }
+    if (!senderId || !receiverId) {
+      return res
+        .status(400)
+        .json({ message: "Sender ID and Receiver ID are required" });
+    }
 
-      // Delete all chats where senderId and receiverId match in either direction
-      const result = await Chats.deleteMany({
-          $or: [
-              { senderId: senderId, receiverId: receiverId },
-              { senderId: receiverId, receiverId: senderId }
-          ]
+    // Delete all chats where senderId and receiverId match in either direction
+    const result = await Chats.deleteMany({
+      $or: [
+        { senderId: senderId, receiverId: receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(401).json({ message: "No chats found to delete" });
+    }
+
+    res
+      .status(200)
+      .json({
+        message: "Chats deleted successfully",
+        deletedCount: result.deletedCount,
       });
-
-      if (result.deletedCount === 0) {
-          return res.status(401).json({ message: "No chats found to delete" });
-      }
-
-      res.status(200).json({ message: "Chats deleted successfully", deletedCount: result.deletedCount });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Server error" });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
-
-
