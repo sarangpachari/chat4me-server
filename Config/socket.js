@@ -9,8 +9,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-
 // Store connected users
 const onlineUsers = new Map();
 let io; // Global io instance
@@ -61,21 +59,36 @@ function initializeSocket(server) {
 
     // Handle file transfer
     socket.on("sendFile", async ({ senderId, receiverId, file }) => {
-      
       try {
         // Upload file to Cloudinary
-        const result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data}`, {
-          resource_type: "auto",
-        });
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.data}`,
+          {
+            resource_type: "auto",
+          }
+        );
 
         // Save message in MongoDB
-        const message = new Chats({ senderId, receiverId, chat: result.secure_url });
+        const message = new Chats({
+          senderId,
+          receiverId,
+          chat: result.secure_url,
+        });
         await message.save();
 
-        // Emit file URL to recipient
-        socket.to(receiverId).emit("receiveFile", { senderId, fileUrl: result.secure_url });
+        const receiverSocketId = onlineUsers.get(receiverId);
 
-        console.log(`File sent from ${senderId} to ${receiverId}:`, result.secure_url);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receiveFile", message);
+        }
+
+        io.to(socket.id).emit("receiveFile", message);
+
+        io.to(socket.id).emit("fileUploaded");
+        console.log(
+          `File sent from ${senderId} to ${receiverId}:`,
+          result.secure_url
+        );
       } catch (error) {
         console.error("File upload error:", error);
       }
