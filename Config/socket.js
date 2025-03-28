@@ -60,7 +60,7 @@ function initializeSocket(server) {
     });
 
     // Handle file transfer
-    socket.on("sendFile", async ({ sender, receiver, file }) => {
+    socket.on("sendFile", async ({ senderId, receiverId, file }) => {
       try {
         // Upload file to Cloudinary
         const result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data}`, {
@@ -68,13 +68,13 @@ function initializeSocket(server) {
         });
 
         // Save message in MongoDB
-        const message = new Chats({ sender, receiver, chat: result.secure_url });
+        const message = new Chats({ senderId, receiverId, chat: result.secure_url });
         await message.save();
 
         // Emit file URL to recipient
-        socket.to(receiver).emit("receiveFile", { sender, fileUrl: result.secure_url });
+        socket.to(receiver).emit("receiveFile", { senderId, fileUrl: result.secure_url });
 
-        console.log(`File sent from ${sender} to ${receiver}:`, result.secure_url);
+        console.log(`File sent from ${senderId} to ${receiverId}:`, result.secure_url);
       } catch (error) {
         console.error("File upload error:", error);
       }
