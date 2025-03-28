@@ -1,5 +1,15 @@
 const { Server } = require("socket.io");
 const Chats = require("../Model/chatShema"); // Import the Chat model
+const cloudinary = require("cloudinary").v2;
+
+// Initialize Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+
 
 // Store connected users
 const onlineUsers = new Map();
@@ -46,6 +56,27 @@ function initializeSocket(server) {
         io.to(socket.id).emit("message", message);
       } catch (error) {
         console.error("Message saving error:", error);
+      }
+    });
+
+    // Handle file transfer
+    socket.on("sendFile", async ({ sender, receiver, file }) => {
+      try {
+        // Upload file to Cloudinary
+        const result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data}`, {
+          resource_type: "auto",
+        });
+
+        // Save message in MongoDB
+        const message = new Chats({ sender, receiver, chat: result.secure_url });
+        await message.save();
+
+        // Emit file URL to recipient
+        socket.to(receiver).emit("receiveFile", { sender, fileUrl: result.secure_url });
+
+        console.log(`File sent from ${sender} to ${receiver}:`, result.secure_url);
+      } catch (error) {
+        console.error("File upload error:", error);
       }
     });
 
