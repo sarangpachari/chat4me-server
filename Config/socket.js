@@ -9,8 +9,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-
 // Store connected users
 const onlineUsers = new Map();
 let io; // Global io instance
@@ -64,13 +62,35 @@ function initializeSocket(server) {
 
       try {
         // Upload file to Cloudinary
-        const result = await cloudinary.uploader.upload(`data:${file.mimetype};base64,${file.data}`, {
-          resource_type: "auto",
-        });
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.data}`,
+          {
+            resource_type: "auto",
+          }
+        );
 
         // Save message in MongoDB
-        const message = new Chats({ senderId, receiverId, chat: result.secure_url });
+        const message = new Chats({
+          senderId,
+          receiverId,
+          chat: result.secure_url,
+        });
         await message.save();
+
+
+        const receiverSocketId = onlineUsers.get(receiverId);
+
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receiveFile", message);
+        }
+
+        io.to(socket.id).emit("receiveFile", message);
+
+        io.to(socket.id).emit("fileUploaded");
+        console.log(
+          `File sent from ${senderId} to ${receiverId}:`,
+          result.secure_url
+        );
 
         // Emit file URL to recipient
 
@@ -78,6 +98,7 @@ function initializeSocket(server) {
 
 
         console.log(`File sent from ${senderId} to ${receiverId}:`, result.secure_url);
+
       } catch (error) {
         console.error("File upload error:", error);
       }
