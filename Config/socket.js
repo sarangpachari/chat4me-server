@@ -59,7 +59,6 @@ function initializeSocket(server) {
 
     // Handle file transfer
     socket.on("sendFile", async ({ senderId, receiverId, file }) => {
-
       try {
         // Upload file to Cloudinary
         const result = await cloudinary.uploader.upload(
@@ -77,7 +76,6 @@ function initializeSocket(server) {
         });
         await message.save();
 
-
         const receiverSocketId = onlineUsers.get(receiverId);
 
         if (receiverSocketId) {
@@ -91,14 +89,6 @@ function initializeSocket(server) {
           `File sent from ${senderId} to ${receiverId}:`,
           result.secure_url
         );
-
-        // Emit file URL to recipient
-
-        socket.to(receiverId).emit("receiveFile", { senderId, fileUrl: result.secure_url });
-
-
-        console.log(`File sent from ${senderId} to ${receiverId}:`, result.secure_url);
-
       } catch (error) {
         console.error("File upload error:", error);
       }
