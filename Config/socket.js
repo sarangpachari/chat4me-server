@@ -1,7 +1,7 @@
 const { Server } = require("socket.io");
 const Chats = require("../Model/chatShema"); // Import the Chat model
 const cloudinary = require("cloudinary").v2;
-
+const Group = require('../Model/groupSchema')
 // Initialize Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -37,6 +37,9 @@ function initializeSocket(server) {
 
       // Send previous chats to the user
       socket.emit("previousChats", previousChats);
+      //Fetch the groups the user has joined
+      const userGroups = await Group.find({ groupMembers: userId });
+      socket.emit("joinedGroups", userGroups);
     });
 
     // Listen for incoming messages
@@ -103,7 +106,55 @@ function initializeSocket(server) {
         console.error("File upload error:", error);
       }
     });
-
+    socket.on("groupMessage", async ({ senderId, groupId, message }) => {
+      try {
+        const group = await Group.findById(groupId);
+    
+        if (!group) return;
+    
+        const newMessage = { senderId, content: message, createdAt: new Date() };
+        group.groupMessages.push(newMessage);
+        await group.save();
+    
+        // Send the message to all online members of the group
+        group.groupMembers.forEach((memberId) => {
+          const memberSocketId = onlineUsers.get(memberId.toString());
+          if (memberSocketId) {
+            io.to(memberSocketId).emit("groupMessage", { groupId, newMessage });
+          }
+        });
+      } catch (error) {
+        console.error("Error in group messaging:", error);
+      }
+    });
+    socket.on("sendGroupFile", async ({ senderId, groupId, file }) => {
+      try {
+        // Upload file to Cloudinary
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.data}`,
+          { resource_type: "auto" }
+        );
+    
+        const group = await Group.findById(groupId);
+        if (!group) return;
+    
+        const fileMessage = { senderId, content: result.secure_url, createdAt: new Date() };
+        group.groupMessages.push(fileMessage);
+        await group.save();
+    
+        // Emit file to all group members
+        group.groupMembers.forEach((memberId) => {
+          const memberSocketId = onlineUsers.get(memberId.toString());
+          if (memberSocketId) {
+            io.to(memberSocketId).emit("receiveGroupFile", { groupId, fileMessage });
+          }
+        });
+    
+        console.log(`File sent in group ${groupId}:`, result.secure_url);
+      } catch (error) {
+        console.error("Group file upload error:", error);
+      }
+    });
     // Handle user disconnection
     socket.on("disconnect", () => {
       for (let [key, value] of onlineUsers.entries()) {
