@@ -52,28 +52,34 @@ exports.getUserGroups = async (req, res) => {
 };
 
 exports.groupInfo = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      // Fetch the group
-      const group = await Group.findById(id).exec();
-      if (!group) {
-        return res.status(400).json({ message: 'Group not found' });
-      }
-  
-      // Fetch usernames of group members using the Users schema
-      const members = await Users.find({ _id: { $in: group.groupMembers } }, 'username');
-  
-      res.status(200).json({
-        groupName: group.name,
-        createdBy: group.createdBy,
-        groupIcon: group.groupIcon,
-        groupMembers: members.map(member => member.username),
-        groupMessages: group.groupMessages,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
+  try {
+    const { id } = req.params;
+    
+    // Fetch group details and populate groupMembers with username and createdBy with username
+    const group = await Group.findById(id)
+      .populate({
+        path: 'groupMembers',
+        select: 'username', // Only select username
+      })
+      .populate({
+        path: 'createdBy',
+        select: 'username', // Fetch createdBy username
+      })
+      .exec();
+
+    if (!group) {
+      return res.status(400).json({ message: 'Group not found' });
     }
-  };
-  
+
+    res.status(200).json({
+      groupName: group.name,
+      createdBy: group.createdBy.username, // Get the username of the creator
+      groupIcon: group.groupIcon,
+      groupMembers: group.groupMembers.map(member => member.username),
+      groupMessages: group.groupMessages,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
