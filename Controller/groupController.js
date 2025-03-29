@@ -72,11 +72,11 @@ exports.groupInfo = async (req, res) => {
         }
 
         res.status(200).json({
-            groupName: group.name,
+            name: group.name,
             createdBy: group.createdBy.username, // Get the username of the creator
             groupIcon: group.groupIcon,
-            groupMembersId:group.groupMembers,
-            groupMessages: group.groupMessages,
+            groupMembers:group.groupMembers,
+            groupMessages: group.groupMessages
             
         });
     } catch (error) {
