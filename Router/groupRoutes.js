@@ -8,7 +8,7 @@ router.get('/get-all-groups/:id',jwtMiddleware,controller.getUserGroups)
 router.get('/group-info/:id',jwtMiddleware,controller.groupInfo)
 router.put('/group-add-user/:id',jwtMiddleware,controller.updateMembers)
 router.put('/group-remove-user/:id',jwtMiddleware,controller.removeUser)
-router.delete('/group-remove/:id',jwtMiddleware,controller.removeGroup)
+router.put('/group-remove/:id',jwtMiddleware,controller.removeGroup)
 router.delete('/group-clear-chat/:id',jwtMiddleware,controller.clearGroupChat)
 
 module.exports = router
