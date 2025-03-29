@@ -39,7 +39,9 @@ function initializeSocket(server) {
       socket.emit("previousChats", previousChats);
       //Fetch the groups the user has joined
       const userGroups = await Group.find({ groupMembers: userId });
+
       socket.emit("joinedGroups", userGroups);
+
     });
 
     // Listen for incoming messages
