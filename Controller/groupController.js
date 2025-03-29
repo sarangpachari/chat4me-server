@@ -70,6 +70,8 @@ exports.groupInfo = async (req, res) => {
         if (!group) {
             return res.status(400).json({ message: 'Group not found' });
         }
+        console.log("Group-info :",group);
+        
 
         res.status(200).json({
             name: group.name,
@@ -77,7 +79,11 @@ exports.groupInfo = async (req, res) => {
             groupIcon: group.groupIcon,
             groupMembers: group.groupMembers,
             groupMessages: group.groupMessages,
+<<<<<<< HEAD
             timestamps: group.timestamps
+=======
+            createdAt:group.createdAt
+>>>>>>> cc590253948f6504dc2c8e132f137d4063c002ea
         });
     } catch (error) {
         console.error(error);
