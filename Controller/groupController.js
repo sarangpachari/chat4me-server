@@ -76,8 +76,8 @@ exports.groupInfo = async (req, res) => {
             createdBy: group.createdBy.username, // Get the username of the creator
             groupIcon: group.groupIcon,
             groupMembers:group.groupMembers,
-            groupMessages: group.groupMessages
-            
+            groupMessages: group.groupMessages,
+            timestamps:group.timestamps
         });
     } catch (error) {
         console.error(error);
