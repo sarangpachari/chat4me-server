@@ -4,7 +4,7 @@ const User = require("../Model/userSchema");
 
 exports.getChatUsers = async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.params); // Convert userId to ObjectId
+    const userId = new mongoose.Types.ObjectId(req.params); 
 
     const chats = await Chats.find({
       $or: [{ senderId: userId }, { receiverId: userId }],

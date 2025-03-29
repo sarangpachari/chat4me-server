@@ -29,7 +29,7 @@ const groupSchema = new mongoose.Schema(
     },
     groupIcon: {
       type: String,
-      default:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHd26dvClIXeNbaHibs6NG8PiZRNuFyjyLHw&s"
+      default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHd26dvClIXeNbaHibs6NG8PiZRNuFyjyLHw&s"
     },
     groupMembers: [
       {

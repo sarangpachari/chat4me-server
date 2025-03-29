@@ -13,7 +13,6 @@ exports.generateOtp = async (req, res) => {
 
   try {
 
-
     // Generate OTP for login
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
 
@@ -100,7 +99,7 @@ exports.getUsername = async (req, res) => {
 
 exports.getUserInfo = async (req, res) => {
   try {
-   const userId = new mongoose.Types.ObjectId(req.params);
+    const userId = new mongoose.Types.ObjectId(req.params);
     const user = await User.findById(userId);
 
     if (!user) {
@@ -157,56 +156,56 @@ exports.getSearchUser = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-      const userId = req.payload; // Extract user ID from JWT middleware
-      if (!req.file) {
-          return res.status(400).json({ message: "No file uploaded" });
-      }
+    const userId = req.payload; // Extract user ID from JWT middleware
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-      // ✅ Get the S3 file URL
-      const imageUrl = req.file.location;
+    // ✅ Get the S3 file URL
+    const imageUrl = req.file.location;
 
-      // ✅ Update user profile in MongoDB
-      const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          { profileImage: imageUrl },
-          { new: true }
-      );
+    // ✅ Update user profile in MongoDB
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profileImage: imageUrl },
+      { new: true }
+    );
 
-      res.status(200).json({
-          message: "Profile updated successfully",
-          user: updatedUser,
-      });
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
-      res.status(500).json({ message: "Server Error", error: error.message });
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
 exports.updateUsername = async (req, res) => {
-    try {
-        const { userId, newUsername } = req.body; // Extract userId & new username
+  try {
+    const { userId, newUsername } = req.body; // Extract userId & new username
 
-        // Check if username already exists
-        const existingUsername = await User.findOne({ username: newUsername });
-        if (existingUsername) {
-            return res.status(400).json({ error: "Username already exists. Please try another one." });
-        }
-
-        // Find user by ID and update username
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { username: newUsername },
-            { new: true } // Return the updated document
-        );
-
-        return res.status(200).json({
-            message: "Username updated successfully",
-            user: updatedUser
-        });
-
-    } catch (error) {
-        console.error("Error updating username:", error);
-        return res.status(500).json({ error: "Internal server error" });
+    // Check if username already exists
+    const existingUsername = await User.findOne({ username: newUsername });
+    if (existingUsername) {
+      return res.status(400).json({ error: "Username already exists. Please try another one." });
     }
+
+    // Find user by ID and update username
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { username: newUsername },
+      { new: true } // Return the updated document
+    );
+
+    return res.status(200).json({
+      message: "Username updated successfully",
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error("Error updating username:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 exports.updateProfile = async (req, res) => {
