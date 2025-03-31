@@ -126,20 +126,14 @@ function initializeSocket(server) {
 
         console.log(`📩 Sending message to group ${groupId}:`, newMessage);
 
-        
         [...group.groupMembers, group.createdBy].forEach((memberId) => {
-          
-
-          if (memberId.toString() ) {
-            
+          if (memberId.toString()) {
             const memberSocketId = onlineUsers.get(memberId.toString());
             if (memberSocketId) {
               io.to(memberSocketId).emit("groupMessage", {
                 groupId,
                 newMessage,
               });
-              
-              
             } else {
               console.log(`User ${memberId} is offline, message not sent`);
             }
@@ -169,14 +163,19 @@ function initializeSocket(server) {
         group.groupMessages.push(fileMessage);
         await group.save();
 
-        // Emit file to all group members
-        group.groupMembers.forEach((memberId) => {
-          const memberSocketId = onlineUsers.get(memberId.toString());
-          if (memberSocketId) {
-            io.to(memberSocketId).emit("receiveGroupFile", {
-              groupId,
-              fileMessage,
-            });
+
+        [...group.groupMembers, group.createdBy].forEach((memberId) => {
+          if (memberId.toString()) {
+            const memberSocketId = onlineUsers.get(memberId.toString());
+            if (memberSocketId) {
+              io.to(memberSocketId).emit("receiveGroupFile", {
+                groupId,
+                fileMessage,
+              });
+              io.emit("fileUploaded");
+            } else {
+              console.log(`User ${memberId} is offline, message not sent`);
+            }
           }
         });
 
