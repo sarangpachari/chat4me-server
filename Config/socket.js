@@ -172,6 +172,7 @@ function initializeSocket(server) {
                 groupId,
                 fileMessage,
               });
+              io.emit("fileUploaded");
             } else {
               console.log(`User ${memberId} is offline, message not sent`);
             }
