@@ -37,11 +37,6 @@ function initializeSocket(server) {
 
       // Send previous chats to the user
       socket.emit("previousChats", previousChats);
-      //Fetch the groups the user has joined
-      const userGroups = await Group.find({ groupMembers: userId });
-
-      socket.emit("joinedGroups", userGroups);
-
     });
 
     // Listen for incoming messages
@@ -98,27 +93,63 @@ function initializeSocket(server) {
         console.error("File upload error:", error);
       }
     });
+
+    socket.on("joinGroup", async ({ userId, groupId }) => {
+      try {
+        const group = await Group.findById(groupId);
+        if (!group) return;
+
+        // Register user as online for groups
+        onlineUsers.set(userId, socket.id); // ✅ This ensures group users are tracked
+
+        // Send previous messages to the user
+        socket.emit("previousGroupMessages", {
+          groupId,
+          groupMessages: group.groupMessages,
+        });
+
+        console.log(`User ${userId} joined group ${groupId}`);
+        console.log("Updated online users:", onlineUsers); // ✅ Debugging
+      } catch (error) {
+        console.error("Error in joining group:", error);
+      }
+    });
+
     socket.on("groupMessage", async ({ senderId, groupId, content }) => {
       try {
         const group = await Group.findById(groupId);
-
         if (!group) return;
 
         const newMessage = { senderId, content, createdAt: new Date() };
         group.groupMessages.push(newMessage);
         await group.save();
 
-        // Send the message to all online members of the group
-        group.groupMembers.forEach((memberId) => {
-          const memberSocketId = onlineUsers.get(memberId.toString());
-          if (memberSocketId) {
-            io.to(memberSocketId).emit("groupMessage", { groupId, newMessage });
+        console.log(`📩 Sending message to group ${groupId}:`, newMessage);
+
+        
+        [...group.groupMembers, group.createdBy].forEach((memberId) => {
+          
+
+          if (memberId.toString() ) {
+            
+            const memberSocketId = onlineUsers.get(memberId.toString());
+            if (memberSocketId) {
+              io.to(memberSocketId).emit("groupMessage", {
+                groupId,
+                newMessage,
+              });
+              
+              
+            } else {
+              console.log(`User ${memberId} is offline, message not sent`);
+            }
           }
         });
       } catch (error) {
         console.error("Error in group messaging:", error);
       }
     });
+
     socket.on("sendGroupFile", async ({ senderId, groupId, file }) => {
       try {
         // Upload file to Cloudinary
