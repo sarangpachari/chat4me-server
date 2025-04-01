@@ -99,9 +99,7 @@ function initializeSocket(server) {
         const group = await Group.findById(groupId);
         if (!group) return;
 
-        // Register user as online for groups
-        onlineUsers.set(userId, socket.id); // ✅ This ensures group users are tracked
-
+        
         // Send previous messages to the user
         socket.emit("previousGroupMessages", {
           groupId,
@@ -115,12 +113,12 @@ function initializeSocket(server) {
       }
     });
 
-    socket.on("groupMessage", async ({ senderId, groupId, content }) => {
+    socket.on("groupMessage", async ({ senderId,senderName, senderIcon, groupId, content }) => {
       try {
         const group = await Group.findById(groupId);
         if (!group) return;
 
-        const newMessage = { senderId, content, createdAt: new Date() };
+        const newMessage = { senderId,senderName, senderIcon, content, createdAt: new Date() };
         group.groupMessages.push(newMessage);
         await group.save();
 
@@ -144,7 +142,7 @@ function initializeSocket(server) {
       }
     });
 
-    socket.on("sendGroupFile", async ({ senderId, groupId, file }) => {
+    socket.on("sendGroupFile", async ({ senderId, groupId,senderName, senderIcon, file }) => {
       try {
         // Upload file to Cloudinary
         const result = await cloudinary.uploader.upload(
@@ -157,6 +155,8 @@ function initializeSocket(server) {
 
         const fileMessage = {
           senderId,
+          senderName,
+          senderIcon,
           content: result.secure_url,
           createdAt: new Date(),
         };

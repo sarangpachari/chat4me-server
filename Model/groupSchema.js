@@ -11,6 +11,12 @@ const groupMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    senderIcon:{
+      type:String,
+    },
+    senderName:{
+      type:String,
+    }
   },
   { timestamps: true }
 );
