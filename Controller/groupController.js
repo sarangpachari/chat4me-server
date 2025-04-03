@@ -79,11 +79,8 @@ exports.groupInfo = async (req, res) => {
             groupIcon: group.groupIcon,
             groupMembers: group.groupMembers,
             groupMessages: group.groupMessages,
-<<<<<<< HEAD
-            timestamps: group.timestamps
-=======
             createdAt:group.createdAt
->>>>>>> cc590253948f6504dc2c8e132f137d4063c002ea
+
         });
     } catch (error) {
         console.error(error);
@@ -207,3 +204,42 @@ exports.clearGroupChat = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+exports.updateGroupIcon = async (req, res) => {
+    try {
+      const userId = req.payload; // Extract user ID from JWT middleware
+      const { groupId } = req.body; // Extract group ID from request body
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+  
+      // ✅ Get the S3 file URL
+      const imageUrl = req.file.location;
+  
+      // ✅ Find the group and check if the user is the creator
+      const group = await Group.findById(groupId);
+      if (!group) {
+        return res.status(404).json({ message: "Group not found" });
+      }
+  
+      if (group.createdBy== userId) {
+        return res.status(403).json({ message: "Unauthorized: Only the creator can update the group icon" });
+      }
+  
+      // ✅ Update group icon in MongoDB
+      const updatedGroup = await Group.findByIdAndUpdate(
+        groupId,
+        { groupIcon: imageUrl },
+        { new: true }
+      );
+  
+      res.status(200).json({
+        message: "Group icon updated successfully",
+        group: updatedGroup,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Server Error", error: error.message });
+    }
+  };
+  

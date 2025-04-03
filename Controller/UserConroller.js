@@ -161,10 +161,10 @@ exports.updateProfile = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // ✅ Get the S3 file URL
+   
     const imageUrl = req.file.location;
 
-    // ✅ Update user profile in MongoDB
+  
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profileImage: imageUrl },
